@@ -1,0 +1,66 @@
+name: CommutePulse
+options:
+  bundleIdPrefix: dev.commutepulse
+  deploymentTarget:
+    iOS: '17.4'
+  xcodeVersion: '26.0'
+  createIntermediateGroups: true
+settings:
+  base:
+    SWIFT_VERSION: '5.0'
+    TARGETED_DEVICE_FAMILY: '1'
+    CODE_SIGN_STYLE: Automatic
+    DEVELOPMENT_TEAM: ''
+    GENERATE_INFOPLIST_FILE: NO
+    MARKETING_VERSION: '1.0.0'
+    CURRENT_PROJECT_VERSION: '1'
+    ENABLE_USER_SCRIPT_SANDBOXING: YES
+packages:
+  CommuteCore:
+    path: .
+targets:
+  CommutePulse:
+    type: application
+    platform: iOS
+    sources:
+      - path: Sources/CommuteApp
+        excludes: [Info.plist, CommutePulse.entitlements]
+      - path: Sources/Shared
+    dependencies:
+      - package: CommuteCore
+        product: CommuteCore
+      - target: CommutePulseWidgets
+        embed: true
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: dev.commutepulse.app
+        INFOPLIST_FILE: Sources/CommuteApp/Info.plist
+        CODE_SIGN_ENTITLEMENTS: Sources/CommuteApp/CommutePulse.entitlements
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+  CommutePulseWidgets:
+    type: app-extension
+    platform: iOS
+    sources:
+      - path: Sources/CommuteWidgets
+        excludes: [Info.plist, CommutePulseWidgets.entitlements]
+      - path: Sources/Shared
+    dependencies:
+      - package: CommuteCore
+        product: CommuteCore
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: dev.commutepulse.app.widgets
+        INFOPLIST_FILE: Sources/CommuteWidgets/Info.plist
+        CODE_SIGN_ENTITLEMENTS: Sources/CommuteWidgets/CommutePulseWidgets.entitlements
+        APPLICATION_EXTENSION_API_ONLY: YES
+        SKIP_INSTALL: YES
+schemes:
+  CommutePulse:
+    build:
+      targets:
+        CommutePulse: all
+        CommutePulseWidgets: all
+    run:
+      config: Debug
+    archive:
+      config: Release

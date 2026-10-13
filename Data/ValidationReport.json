@@ -1,0 +1,113 @@
+{
+  "validatedAt": "2026-10-14",
+  "serviceCount": 1591,
+  "stationCount": 10,
+  "sourceCount": 1534,
+  "geometryVertices": 186,
+  "crossOsakiVerifiedServices": 947,
+  "publishedArrivalRecords": 2427,
+  "estimatedArrivalFallbackRecords": 7180,
+  "holidayCoveredTo": "2027-12-31",
+  "rawHashesChecked": 1534,
+  "counts": [
+    {
+      "routeID": "denentoshi",
+      "direction": "forward",
+      "dayTypes": "weekday",
+      "count": 292
+    },
+    {
+      "routeID": "denentoshi",
+      "direction": "forward",
+      "dayTypes": "weekendHoliday",
+      "count": 214
+    },
+    {
+      "routeID": "yamanote",
+      "direction": "forward",
+      "dayTypes": "weekday",
+      "count": 266
+    },
+    {
+      "routeID": "yamanote",
+      "direction": "forward",
+      "dayTypes": "weekendHoliday",
+      "count": 260
+    },
+    {
+      "routeID": "yamanote",
+      "direction": "reverse",
+      "dayTypes": "weekday",
+      "count": 283
+    },
+    {
+      "routeID": "yamanote",
+      "direction": "reverse",
+      "dayTypes": "weekday,weekendHoliday",
+      "count": 4
+    },
+    {
+      "routeID": "yamanote",
+      "direction": "reverse",
+      "dayTypes": "weekendHoliday",
+      "count": 272
+    }
+  ],
+  "sourceCoverage": [
+    {
+      "sourceID": "jr-shibuya-inner-weekday",
+      "date": "2026-10-14",
+      "stationID": "shibuya",
+      "confirmedDepartures": 250,
+      "missing": 0,
+      "firstMinute": 289,
+      "lastMinute": 1488
+    },
+    {
+      "sourceID": "jr-shibuya-inner-weekend",
+      "date": "2026-10-17",
+      "stationID": "shibuya",
+      "confirmedDepartures": 250,
+      "missing": 0,
+      "firstMinute": 289,
+      "lastMinute": 1488
+    },
+    {
+      "sourceID": "jr-tamachi-outer-weekday",
+      "date": "2026-10-14",
+      "stationID": "tamachi",
+      "confirmedDepartures": 261,
+      "missing": 0,
+      "firstMinute": 279,
+      "lastMinute": 1495
+    },
+    {
+      "sourceID": "jr-tamachi-outer-weekend",
+      "date": "2026-10-17",
+      "stationID": "tamachi",
+      "confirmedDepartures": 256,
+      "missing": 0,
+      "firstMinute": 279,
+      "lastMinute": 1495
+    },
+    {
+      "sourceID": "tokyu-web",
+      "dayType": "weekday",
+      "stationID": "sangenjaya",
+      "confirmedDepartures": 292,
+      "missing": 0,
+      "firstMinute": 309,
+      "lastMinute": 1463
+    },
+    {
+      "sourceID": "tokyu-web",
+      "dayType": "weekendHoliday",
+      "stationID": "sangenjaya",
+      "confirmedDepartures": 214,
+      "missing": 0,
+      "firstMinute": 309,
+      "lastMinute": 1463
+    }
+  ],
+  "buildExecuted": false
+}

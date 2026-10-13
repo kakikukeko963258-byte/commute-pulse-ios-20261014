@@ -1,0 +1,101 @@
+[
+  {
+    "routeID": "denentoshi",
+    "from": "sangenjaya",
+    "to": "ikejiri_ohashi",
+    "vertices": 16,
+    "metres": 1480.3,
+    "stationSnapMetres": [
+      0.0,
+      0.0
+    ]
+  },
+  {
+    "routeID": "denentoshi",
+    "from": "ikejiri_ohashi",
+    "to": "shibuya",
+    "vertices": 26,
+    "metres": 1856.0,
+    "stationSnapMetres": [
+      0.0,
+      0.0
+    ]
+  },
+  {
+    "routeID": "yamanote",
+    "from": "shibuya",
+    "to": "ebisu",
+    "vertices": 24,
+    "metres": 1492.5,
+    "stationSnapMetres": [
+      0.0,
+      0.0
+    ]
+  },
+  {
+    "routeID": "yamanote",
+    "from": "ebisu",
+    "to": "meguro",
+    "vertices": 31,
+    "metres": 1624.5,
+    "stationSnapMetres": [
+      0.0,
+      0.0
+    ]
+  },
+  {
+    "routeID": "yamanote",
+    "from": "meguro",
+    "to": "gotanda",
+    "vertices": 15,
+    "metres": 1060.3,
+    "stationSnapMetres": [
+      0.0,
+      0.0
+    ]
+  },
+  {
+    "routeID": "yamanote",
+    "from": "gotanda",
+    "to": "osaki",
+    "vertices": 9,
+    "metres": 824.8,
+    "stationSnapMetres": [
+      0.0,
+      0.0
+    ]
+  },
+  {
+    "routeID": "yamanote",
+    "from": "osaki",
+    "to": "shinagawa",
+    "vertices": 39,
+    "metres": 2083.9,
+    "stationSnapMetres": [
+      0.0,
+      0.0
+    ]
+  },
+  {
+    "routeID": "yamanote",
+    "from": "shinagawa",
+    "to": "takanawa_gateway",
+    "vertices": 9,
+    "metres": 837.6,
+    "stationSnapMetres": [
+      0.0,
+      0.0
+    ]
+  },
+  {
+    "routeID": "yamanote",
+    "from": "takanawa_gateway",
+    "to": "tamachi",
+    "vertices": 17,
+    "metres": 1371.3,
+    "stationSnapMetres": [
+      0.0,
+      0.0
+    ]
+  }
+]

@@ -1,0 +1,32 @@
+# Xcode / Swift
+.build/
+DerivedData/
+*.xcuserstate
+xcuserdata/
+*.xccheckout
+*.xcscmblueprint
+
+# Signing and local configuration
+*.mobileprovision
+*.provisionprofile
+*.p12
+*.p8
+*.cer
+*.key
+.env
+.env.*
+!.env.example
+
+# Build products
+*.ipa
+*.app/
+*.appex/
+*.dSYM/
+*.dSYM.zip
+*.xcarchive/
+Data/raw/
+__pycache__/
+*.py[cod]
+build/
+CommutePulse.xcodeproj/
+.tools/

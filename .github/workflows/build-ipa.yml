@@ -1,0 +1,80 @@
+name: Manual iPhone IPA
+
+# Intentionally no push, pull_request, schedule or workflow_run triggers.
+on:
+  workflow_dispatch:
+    inputs:
+      confirmation:
+        description: 'Build only when requested: type BUILD'
+        required: true
+        type: string
+      xcode_path:
+        description: 'Optional installed Xcode path; blank uses runner default'
+        required: false
+        default: ''
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: manual-ipa-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  ipa:
+    if: inputs.confirmation == 'BUILD'
+    runs-on: macos-15
+    timeout-minutes: 45
+    env:
+      XCODE_PATH: ${{ inputs.xcode_path }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Select Xcode and record SDK
+        run: |
+          set -euo pipefail
+          if [ -n "$XCODE_PATH" ]; then
+            test -d "$XCODE_PATH/Contents/Developer"
+            sudo xcode-select --switch "$XCODE_PATH/Contents/Developer"
+          fi
+          mkdir -p artifacts
+          xcodebuild -version > artifacts/toolchain.txt
+          xcodebuild -showsdks >> artifacts/toolchain.txt
+          cat artifacts/toolchain.txt
+      - name: Validate bundled facts
+        run: python3 Scripts/validate_repository.py
+      - name: Run core tests (only in this manually started workflow)
+        run: swift test
+      - name: Generate Xcode project
+        run: |
+          brew install xcodegen
+          xcodegen generate --spec project.yml
+      - name: Archive unsigned device app
+        run: |
+          set -euo pipefail
+          xcodebuild archive -project CommutePulse.xcodeproj -scheme CommutePulse \
+            -configuration Release -destination 'generic/platform=iOS' \
+            -archivePath "$PWD/build/CommutePulse.xcarchive" \
+            -derivedDataPath "$PWD/build/DerivedData" \
+            CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO \
+            2>&1 | tee artifacts/xcodebuild.log
+      - name: Package IPA for AltStore signing
+        run: |
+          set -euo pipefail
+          mkdir -p build/IPA/Payload
+          cp -R build/CommutePulse.xcarchive/Products/Applications/CommutePulse.app build/IPA/Payload/
+          test -d build/IPA/Payload/CommutePulse.app/PlugIns/CommutePulseWidgets.appex
+          cp Sources/CommuteApp/CommutePulse.entitlements artifacts/requested-app-entitlements.plist
+          cp Sources/CommuteWidgets/CommutePulseWidgets.entitlements artifacts/requested-widget-entitlements.plist
+          codesign -d --entitlements :- build/IPA/Payload/CommutePulse.app > artifacts/archive-app-entitlements.txt 2>&1 || true
+          codesign -d --entitlements :- build/IPA/Payload/CommutePulse.app/PlugIns/CommutePulseWidgets.appex > artifacts/archive-widget-entitlements.txt 2>&1 || true
+          printf '%s\n' 'Unsigned IPA. AltStore must sign both targets. Requested entitlements do not prove granted capabilities.' > artifacts/READ-BEFORE-INSTALL.txt
+          cd build/IPA
+          /usr/bin/zip -qry ../../artifacts/CommutePulse-AltStore.ipa Payload
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: CommutePulse-AltStore-${{ github.run_number }}
+          path: artifacts/
+          retention-days: 14
+          if-no-files-found: warn
