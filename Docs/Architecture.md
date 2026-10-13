@@ -26,7 +26,7 @@ App Groupsは両ターゲットへ設定する。設定値のコンテナを優�
 
 ## Windowsからの配布
 
-project.ymlをXcodeGenの設計図として保存する。macOS runnerでXcodeプロジェクトを生成し、Xcodeで未署名のdevice archiveを作り、PayloadをIPA化する。AltStoreで本体と拡張機能を再署名する。Workflowはworkflow_dispatchだけで、pushでは実行されない。今回の作業ではビルドやWorkflow起動を行わない。
+project.ymlをXcodeGenの設計図として保存する。macOS runnerでXcodeプロジェクトを生成し、Xcodeで未署名のdevice archiveを作り、PayloadをIPA化する。AltStoreで本体と拡張機能を再署名する。Workflowはworkflow_dispatchだけで、pushでは実行されない。ビルドはユーザーの指示後に手動実行する。実行結果はDocs/Build.mdに記録する。
 
 Apple一次資料:
 

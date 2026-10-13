@@ -2,7 +2,9 @@
 
 Swift / SwiftUI / WidgetKit / ActivityKit / Core Location / Core Motionで新規作成したiPhoneアプリ。位置と同梱予定時刻を使って乗車路線・列車候補・進捗を端末内で推定する。通常利用で通信、APIキー、時刻表JSONの手動読込は不要。
 
-**現在は設計・ソース・同梱データの準備段階。ビルド、IPA生成、実機検証はまだ行っていない。pushでビルドは起動しない。**
+**macOS CIで18テスト、IPA archive、Simulator build、8シナリオの画面・判定確認が成功しました。AltStoreでの再署名・iPhone実機検証は未実施です。Workflowは手動実行専用で、pushでは起動しません。**
+
+[最新のIPAとスクリーンショットのArtifact](https://github.com/kakikukeko963258-byte/commute-pulse-ios-20261014/actions/runs/38481724740/artifacts/11857816700) / [8シナリオの撮影画像](Docs/Screenshots/README.md) / [ビルド記録](Docs/Build.md)
 
 ## 対象と表示
 
@@ -38,19 +40,24 @@ python Scripts/validate_repository.py
 | Sources/Shared | 時間連動表示、共有保存、署名・共有診断 |
 | Sources/CommuteApp/Resources | 同梱時刻表・線路形状・祝日・出典 |
 | Data | 出典記録とデータ監査。原本rawはGit除外 |
-| Tests/CommuteCoreTests | 判定のXCTestソース（未実行） |
+| Tests/CommuteCoreTests | 判定のXCTest18件（最新CIで全件成功） |
 | project.yml | XcodeGenのプロジェクト定義 |
 | .github/workflows/build-ipa.yml | 手動実行専用のmacOS/Xcode→IPA Workflow |
 
-## ビルドを依頼した後
+## 初回CIビルドとIPA
 
-GitHub ActionsのManual iPhone IPAを手動実行し、confirmationにBUILDを指定する。macos-15 runnerのXcodeを使用し、XcodeGenでプロジェクトを生成、Coreのテストとdevice archiveを行う。Artifact内のCommutePulse-AltStore.ipaをAltStoreで署名してインストールする。
+2026-10-14の[初回CI run](https://github.com/kakikukeko963258-byte/commute-pulse-ios-20261014/actions/runs/38479248227)（commit `84b2ffb`）では、macos-15 / Xcode 16.4 (16F6) / iOS 18.5 SDKでSwift tests 17件が成功し、`xcodebuild archive` が `ARCHIVE_SUCCEEDED` になりました。ArtifactのIPAは691,527 bytesで、PayloadにアプリとWidget Extensionが含まれ、両方に実行可能Mach-Oがあることを確認しました。Info.plist上のApp Group設定も両ターゲットで一致しています。
+
+最新の[run38481724740](https://github.com/kakikukeko963258-byte/commute-pulse-ios-20261014/actions/runs/38481724740)（commit395e7c8）で18テストが通過し、IPA699,394 bytesと8シナリオの撮影画像・判定JSONを取得しました。シミュレーターはiPhone16e／iOS26.2です。
+
+IPAは未署名です。AltStoreで再署名してiPhoneへインストールしてください。再署名後の実行ファイルentitlements、共有container、Widget読取、Live Activityの実表示は未確認です。
 
 未署名IPAのため、App Groupsの設定があることと再署名後に使えることは別。無料Apple Accountという理由だけで可否を断定せず、両ターゲットの署名、プロファイル、コンテナ書込・Widget読取記録を診断する。Live Activityの開始要求成功と実表示も分けて確認する。
 
 - [設計](Docs/Architecture.md) / [推定エンジン](Docs/Inference.md)
 - [時刻表・線路・祝日・利用条件](Docs/Sources.md)
 - [AltStore・共有診断](Docs/AltStore.md)
+- [CIビルド・IPA](Docs/Build.md)
 - [検証結果と実機チェックリスト](Docs/Validation.md)
 - [プライバシー](Docs/Privacy.md)
 

@@ -1,6 +1,6 @@
 # AltStore でのインストール
 
-CommutePulse の IPA は、Windows で開発したソースを GitHub に push し、GitHub Actions の macOS runner と Xcode でビルドして Artifact として取得する運用を前提にします。ローカル Mac は前提にしません。Workflow は手動実行し、実行後に対象 run の Artifact から IPA をダウンロードします。現時点で IPA の作成・署名・インストールは未検証です。
+CommutePulse の IPA は、Windows で開発したソースを GitHub に push し、GitHub Actions の macOS runner と Xcode でビルドして Artifact として取得します。ローカル Mac は前提にしません。Workflow は手動実行専用です。初回[CI run 38479248227](https://github.com/kakikukeko963258-byte/commute-pulse-ios-20261014/actions/runs/38479248227)で未署名IPA（691,527 bytes）の生成と構造を確認済みです。AltStore再署名、iPhoneへのインストール、実機App Groups/Widget/Live Activity動作は未確認です。Simulator撮影を含む後続run 38480050090は実行中で、まだ成功結果として扱いません。
 
 ## インストール手順
 

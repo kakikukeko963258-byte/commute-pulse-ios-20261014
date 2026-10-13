@@ -1,6 +1,6 @@
 # 検証チェックリスト
 
-この文書は CommutePulse の設計・実装を端末で確認するための記録用チェックリストです。静的検証の結果は下記に記録します。実機・ビルド・XCTest実行の項目は **未確認** です。結果を推測で Pass にせず、端末、OS、ビルド識別子、手順、実際の結果を記録してから状態を更新してください。
+静的検証とCIの実行結果を記録します。run 38481724740では18テスト、device archive、Simulator build、8シナリオの画面・判定状態の確認が成功しました。iPhone16e／iOS26.2シミュレーターの模擬観測であり、実GPSの結果ではありません。AltStore再署名後のiPhone17e実機、App Group共有、Widget／Live Activity実表示は **未確認** です。
 
 ## 準備段階の検証結果（2026-10-14）
 
@@ -13,10 +13,14 @@
 | 大崎継続根拠 | PASS | 947サービスを公式列車詳細の環状矢印で確認 |
 | 到着時刻分類 | PASS | 公表到着2,427件、発車で代用する推定到着7,180件を分離 |
 | 線路・祝日 | PASS | 10駅、9区間、実形状186点、祝日2025〜2027年。期限外は推定を保留 |
-| XCTest | 未実行 | 17ケースのソースを用意。ユーザーのビルド指示後にmacOSで実行 |
-| Swift/Xcodeビルド・IPA | 未実行 | 今回は実行しない。AltStore署名・iPhone17e表示も未検証 |
+| XCTest | PASS | 最新CI run 38481724740、18 tests executed / 0 failures |
+| Xcode archive / IPA | PASS | macos-15、Xcode16.4 (16F6)、iOS18.5 SDK。`ARCHIVE_SUCCEEDED`。最新IPA699,394 bytes、アプリとWidget ExtensionのMach-Oを確認 |
+| IPAのApp Group plist設定 | PASS | appとWidget ExtensionのInfo.plistで設定値が一致。未署名IPAのため実行ファイルentitlementsや共有container成功の証明ではない |
+| Simulatorスクリーンショット | PASS | iPhone16e／iOS26.2、8枚と判定JSONを取得。全8シナリオのstateVerified=true。許可ダイアログなし、縦駅名・高輪GW・バーの欠けなしを目視確認 |
+| AltStore再署名・App Group container | 未確認 | AltStore後の両ターゲット署名済みentitlements/profile、実機のcontainer共有とWidget読取記録は未確認 |
+| iPhone 17e / Widget / Live Activity実表示 | 未確認 | 実機未確認。Activity.request受理やSimulator表示からロック画面の実表示を推定しない |
 
-データ照合の詳細はData/ValidationReport.json。公開cloneでの検証はpython Scripts/validate_repository.py、ローカル原本まで含める場合はpython Scripts/validate_data.py --raw。通常版・Widget・Live Activityの画面レイアウトはソース上の確認に留まる。
+データ照合はData/ValidationReport.json、最新撮影結果はDocs/Screenshots/Results.json。本体の模擬画面を確認済み。Widget・Live Activityの実表示、通常版の実位置計測、ロック中・背景時の更新は実機で確認する。
 
 ## 記録欄
 
@@ -65,7 +69,7 @@ iPhone 17e での実機確認は **未実施・保留** です。シミュレー
 
 ## 静的ソースレビュー（2026-10-14）
 
-前回の静的指摘を受け、以下はソースで修正したとの報告を反映しています。こちらで再ビルドや実機動作を確認した結果ではありません。XCTest 17 件を含むテストは未実行で、結果は静的確認のみです。実行時の結果を Pass と記録しないでください。
+前回の静的指摘に対する修正内容を記録しています。18テストと8シナリオの本体画面・判定確認は最新CIで通過しました。Widget／Live Activityの表示枠と背景更新は、実機検証の結果を追記します。
 
 | 項目 | 静的レビュー結果 | 実機・実行確認 |
 | --- | --- | --- |
