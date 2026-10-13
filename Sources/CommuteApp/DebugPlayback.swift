@@ -24,6 +24,8 @@ enum DebugPlayback {
             $0.stops.count >= 2
                 && (scenario == .express ? $0.routeID == "denentoshi" && $0.trainType == .express : $0.routeID == "yamanote")
                 && (scenario == .reverse ? $0.direction == .reverse && $0.stops.first?.stationID == "tamachi" : $0.direction == .forward)
+                && ([.missedOrigin, .intermediateRecovery, .gpsMissing, .ambiguous].contains(scenario)
+                    ? $0.stops.first?.stationID == "shibuya" : true)
                 && (scenario == .midnight ? ($0.stops.last?.departureMinute ?? 0) >= 1440 : true)
         }
         guard let service = eligible.sorted(by: {
@@ -50,9 +52,10 @@ enum DebugPlayback {
             let skip = (scenario == .missedOrigin || scenario == .intermediateRecovery) && index == 0
             if !skip {
                 let missing = scenario == .gpsMissing && index > 0
+                let railCoordinate = coordinate(at: station, route: route)
                 let coordinate = scenario == .road
                     ? Coordinate(latitude: station.latitude + 0.012, longitude: station.longitude + 0.008)
-                    : station.coordinate
+                    : railCoordinate
                 output.append(TravelObservation(timestamp: time.addingTimeInterval(-15),
                     coordinate: missing ? nil : coordinate, horizontalAccuracy: missing ? nil : 18,
                     speedMetersPerSecond: 1.0, motion: .automotive, simulated: true))
@@ -76,6 +79,13 @@ enum DebugPlayback {
         }
         if scenario == .ambiguous { return Array(output.prefix(3)) }
         return output.sorted { $0.timestamp < $1.timestamp }
+    }
+
+    private static func coordinate(at station: StationDefinition, route: RouteDefinition?) -> Coordinate {
+        let point = route?.segments.first(where: { $0.fromStationID == station.id })?.coordinates.first
+            ?? route?.segments.first(where: { $0.toStationID == station.id })?.coordinates.last
+        guard let point, point.count == 2 else { return station.coordinate }
+        return Coordinate(latitude: point[0], longitude: point[1])
     }
 
     private static func interpolate(from: StationDefinition, to: StationDefinition,

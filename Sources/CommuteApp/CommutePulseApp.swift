@@ -7,6 +7,7 @@ import CommuteCore
     var body: some Scene {
         WindowGroup {
             CommuteScreen(controller: controller)
+                .task { controller.configureScreenshotIfRequested() }
                 .onChange(of: scenePhase, initial: true) { _, value in
                     controller.setForeground(value == .active)
                 }
@@ -23,7 +24,7 @@ private struct CommuteScreen: View {
         NavigationStack {
             ScrollView {
                 VStack(alignment: .leading, spacing: 20) {
-                    RouteProgressView(state: controller.display)
+                    RouteProgressView(state: controller.display, stale: !controller.display.isSimulated && controller.display.staleDate < .now)
                         .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 18))
                     Text("進捗は位置と同梱時刻表による推定です。遅延情報は取得しません。")
                         .font(.footnote).foregroundStyle(.secondary)

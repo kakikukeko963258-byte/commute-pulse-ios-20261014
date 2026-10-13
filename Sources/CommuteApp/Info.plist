@@ -10,6 +10,7 @@
   <key>CFBundleVersion</key><string>$(CURRENT_PROJECT_VERSION)</string>
   <key>LSRequiresIPhoneOS</key><true/>
   <key>UILaunchScreen</key><dict/>
+  <key>UIRequiresFullScreen</key><true/>
   <key>UISupportedInterfaceOrientations</key><array><string>UIInterfaceOrientationPortrait</string></array>
   <key>NSLocationWhenInUseUsageDescription</key><string>端末内で駅・路線・通学進捗を推定します。位置情報をサーバーへ送信しません。</string>
   <key>NSLocationAlwaysAndWhenInUseUsageDescription</key><string>計測中に画面を閉じても駅の到着と進捗を端末内で確認するため、位置情報を使用します。</string>

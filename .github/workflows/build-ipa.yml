@@ -71,6 +71,19 @@ jobs:
           printf '%s\n' 'Unsigned IPA. AltStore must sign both targets. Requested entitlements do not prove granted capabilities.' > artifacts/READ-BEFORE-INSTALL.txt
           cd build/IPA
           /usr/bin/zip -qry ../../artifacts/CommutePulse-AltStore.ipa Payload
+      - name: Build simulator app for actual screen captures
+        run: |
+          set -euo pipefail
+          xcodebuild build -project CommutePulse.xcodeproj -scheme CommutePulse \
+            -configuration Debug -sdk iphonesimulator -destination 'generic/platform=iOS Simulator' \
+            -derivedDataPath "$PWD/build/Simulator" \
+            CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO \
+            2>&1 | tee artifacts/simulator-build.log
+      - name: Launch app and capture simulator screenshots
+        run: |
+          python3 Scripts/capture_simulator.py \
+            --app "$PWD/build/Simulator/Build/Products/Debug-iphonesimulator/CommutePulse.app" \
+            --output "$PWD/artifacts/screenshots"
       - uses: actions/upload-artifact@v4
         if: always()
         with:

@@ -95,6 +95,8 @@ struct RouteProgressView: View {
             }
         }
         .padding(compact ? 12 : 16)
+        .environment(\.timeZone, TimeZone(identifier: "Asia/Tokyo")!)
+        .environment(\.locale, Locale(identifier: "ja_JP"))
     }
 
     @ViewBuilder private func segment(index: Int) -> some View {

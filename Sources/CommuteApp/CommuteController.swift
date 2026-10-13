@@ -22,6 +22,7 @@ import CommuteCore
     private var lastReload = Date.distantPast
     private var lastPublish = Date.distantPast
     private var foreground = true
+    private var screenshotConfigured = false
 
     init() {
         do {
@@ -145,4 +146,50 @@ import CommuteCore
         ingest(debugObservations.removeFirst())
         debugRemaining = debugObservations.count
     }
+
+    /// Simulator captures use the same public debugging path and engine.
+    /// Production builds do not consume automation launch arguments.
+    func configureScreenshotIfRequested() {
+        #if DEBUG
+        guard !screenshotConfigured else { return }
+        screenshotConfigured = true
+        let arguments = ProcessInfo.processInfo.arguments
+        guard let index = arguments.firstIndex(of: "--screenshot-scenario"), index + 1 < arguments.count else { return }
+        let key = arguments[index + 1]
+        let scenarios: [String: DebugScenario] = [
+            "missedOrigin": .missedOrigin, "intermediateRecovery": .intermediateRecovery,
+            "reverse": .reverse, "midnight": .midnight, "express": .express,
+            "gpsMissing": .gpsMissing, "ambiguous": .ambiguous, "road": .road
+        ]
+        guard let scenario = scenarios[key] else {
+            writeScreenshotReport(scenario: key)
+            return
+        }
+        loadDebug(scenario)
+        var steps = 4
+        if let i = arguments.firstIndex(of: "--screenshot-steps"), i + 1 < arguments.count {
+            steps = min(30, max(0, Int(arguments[i + 1]) ?? 4))
+        }
+        for _ in 0..<steps { stepDebug() }
+        writeScreenshotReport(scenario: key)
+        #endif
+    }
+
+    #if DEBUG
+    private func writeScreenshotReport(scenario: String) {
+        struct Report: Codable {
+            let scenario: String
+            let snapshot: ProgressSnapshot
+            let display: DisplayState
+            let status: String
+        }
+        guard let directory = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first else { return }
+        let encoder = JSONEncoder()
+        encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
+        encoder.dateEncodingStrategy = .iso8601
+        if let data = try? encoder.encode(Report(scenario: scenario, snapshot: snapshot, display: display, status: status)) {
+            try? data.write(to: directory.appendingPathComponent("screenshot-state.json"), options: .atomic)
+        }
+    }
+    #endif
 }

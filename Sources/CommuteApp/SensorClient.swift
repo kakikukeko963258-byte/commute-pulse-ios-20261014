@@ -83,19 +83,30 @@ import CommuteCore
         }
     }
 
-    func locationManagerDidChangeAuthorization(_ manager: CLLocationManager) { startAuthorizedLocation() }
-    func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
-        for fix in locations where abs(fix.timestamp.timeIntervalSinceNow) < 120 {
-            onObservation?(TravelObservation(timestamp: fix.timestamp,
+    nonisolated func locationManagerDidChangeAuthorization(_ manager: CLLocationManager) {
+        Task { @MainActor [weak self] in self?.startAuthorizedLocation() }
+    }
+    nonisolated func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
+        let observations = locations.filter { abs($0.timestamp.timeIntervalSinceNow) < 120 }.map { fix in
+            TravelObservation(timestamp: fix.timestamp,
                 coordinate: Coordinate(latitude: fix.coordinate.latitude, longitude: fix.coordinate.longitude),
                 horizontalAccuracy: fix.horizontalAccuracy >= 0 ? fix.horizontalAccuracy : nil,
                 speedMetersPerSecond: fix.speed >= 0 ? fix.speed : nil,
-                courseDegrees: fix.course >= 0 ? fix.course : nil, motion: evidence))
+                courseDegrees: fix.course >= 0 ? fix.course : nil)
+        }
+        Task { @MainActor [weak self] in
+            guard let self else { return }
+            for var observation in observations {
+                observation.motion = self.evidence
+                self.onObservation?(observation)
+            }
         }
     }
-    func locationManager(_ manager: CLLocationManager, didFailWithError error: Error) {
-        onStatus?("GPS取得待ち・予定時刻に基づく推定")
-        emitMissingLocation()
+    nonisolated func locationManager(_ manager: CLLocationManager, didFailWithError error: Error) {
+        Task { @MainActor [weak self] in
+            self?.onStatus?("GPS取得待ち・予定時刻に基づく推定")
+            self?.emitMissingLocation()
+        }
     }
     private func emitMissingLocation() {
         onObservation?(TravelObservation(timestamp: .now, motion: evidence))
