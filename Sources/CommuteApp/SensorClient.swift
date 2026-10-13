@@ -5,8 +5,9 @@ import CommuteCore
 
 @MainActor final class SensorClient: NSObject, CLLocationManagerDelegate {
     private let location = CLLocationManager()
-    private let activity = CMMotionActivityManager()
-    private let motion = CMMotionManager()
+    // Instantiate Motion managers only after the user starts real measurement.
+    private var activity: CMMotionActivityManager?
+    private var motion: CMMotionManager?
     private var evidence: MotionEvidence = .unknown
     private var accelerationWindow: [Double] = []
     private(set) var accelerationRMS = 0.0
@@ -28,18 +29,23 @@ import CommuteCore
         location.requestWhenInUseAuthorization()
         startAuthorizedLocation()
         if CMMotionActivityManager.isActivityAvailable() {
-            activity.startActivityUpdates(to: .main) { [weak self] event in
+            let manager = activity ?? CMMotionActivityManager()
+            activity = manager
+            manager.startActivityUpdates(to: .main) { [weak self] event in
                 guard let event else { return }
                 Task { @MainActor in
-                    self?.evidence = event.walking || event.running ? .pedestrian
+                    guard let self, self.running else { return }
+                    self.evidence = event.walking || event.running ? .pedestrian
                         : event.cycling ? .cycling : event.automotive ? .automotive
                         : event.stationary ? .stationary : .unknown
                 }
             }
         }
-        if motion.isAccelerometerAvailable {
-            motion.accelerometerUpdateInterval = 0.2
-            motion.startAccelerometerUpdates(to: .main) { [weak self] sample, _ in
+        let accelerometer = motion ?? CMMotionManager()
+        motion = accelerometer
+        if accelerometer.isAccelerometerAvailable {
+            accelerometer.accelerometerUpdateInterval = 0.2
+            accelerometer.startAccelerometerUpdates(to: .main) { [weak self] sample, _ in
                 guard let sample else { return }
                 let a = sample.acceleration
                 let magnitude = sqrt(a.x * a.x + a.y * a.y + a.z * a.z)
@@ -49,6 +55,7 @@ import CommuteCore
     }
 
     private func recordAcceleration(_ magnitude: Double) {
+        guard running else { return }
         accelerationWindow.append(magnitude)
         if accelerationWindow.count > 25 { accelerationWindow.removeFirst() }
         let mean = accelerationWindow.reduce(0, +) / Double(accelerationWindow.count)
@@ -60,12 +67,14 @@ import CommuteCore
     func requestBackgroundAuthorization() { location.requestAlwaysAuthorization() }
 
     func stop() {
+        guard running else { return }
         running = false
         location.stopUpdatingLocation()
-        activity.stopActivityUpdates()
-        motion.stopAccelerometerUpdates()
+        activity?.stopActivityUpdates()
+        motion?.stopAccelerometerUpdates()
         accelerationWindow.removeAll()
         evidence = .unknown
+        accelerationRMS = 0
     }
 
     private func startAuthorizedLocation() {
@@ -95,7 +104,7 @@ import CommuteCore
                 courseDegrees: fix.course >= 0 ? fix.course : nil)
         }
         Task { @MainActor [weak self] in
-            guard let self else { return }
+            guard let self, self.running else { return }
             for var observation in observations {
                 observation.motion = self.evidence
                 self.onObservation?(observation)
@@ -104,6 +113,7 @@ import CommuteCore
     }
     nonisolated func locationManager(_ manager: CLLocationManager, didFailWithError error: Error) {
         Task { @MainActor [weak self] in
+            guard self?.running == true else { return }
             self?.onStatus?("GPS取得待ち・予定時刻に基づく推定")
             self?.emitMissingLocation()
         }

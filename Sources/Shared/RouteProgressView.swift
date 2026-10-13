@@ -45,9 +45,13 @@ struct RouteProgressView: View {
                     }
                 }
                 Spacer(minLength: 2)
-                Text(state.isSimulated ? "シミュレーション" : state.confidence)
-                    .font(.system(size: compact ? 9 : 11, weight: .semibold))
-                    .foregroundStyle(state.isSimulated ? .orange : .secondary)
+                VStack(alignment: .trailing, spacing: 2) {
+                    if state.isSimulated {
+                        Text("シミュレーション").foregroundStyle(.orange)
+                    }
+                    Text(state.confidence).foregroundStyle(.secondary)
+                }
+                .font(.system(size: compact ? 9 : 11, weight: .semibold))
             }
             if state.stations.count > 1 {
                 GeometryReader { proxy in

@@ -147,6 +147,14 @@ import CommuteCore
         debugRemaining = debugObservations.count
     }
 
+    var debugClockLabel: String {
+        let formatter = DateFormatter()
+        formatter.locale = Locale(identifier: "ja_JP")
+        formatter.timeZone = TimeZone(identifier: "Asia/Tokyo")
+        formatter.dateFormat = "yyyy-MM-dd HH:mm:ss"
+        return formatter.string(from: snapshot.date)
+    }
+
     /// Simulator captures use the same public debugging path and engine.
     /// Production builds do not consume automation launch arguments.
     func configureScreenshotIfRequested() {

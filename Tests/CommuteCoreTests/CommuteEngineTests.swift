@@ -90,6 +90,52 @@ final class CommuteEngineTests: XCTestCase {
         XCTAssertNotNil(state.segmentEnd) // Both candidates agree on this interval.
     }
 
+    func testCoarseGPSDoesNotSelectHigherScoringTrainWithSparseHistory() {
+        var data = dataset()
+        var laterService = data.services[0]
+        laterService.id = "one-minute-later"
+        laterService.stops = laterService.stops.map { stop in
+            var later = stop; later.departureMinute += 1; return later
+        }
+        data.services.append(laterService)
+        // A point a quarter of the way along the actual first shape, outside either station's radius.
+        // The first timetable fits better, but a broad GPS uncertainty cannot establish its identity.
+        let coordinate = Coordinate(latitude: 35.60125, longitude: 139.7001)
+        let date = instant("2026-10-14T08:00:30+09:00")
+        let precise = TravelObservation(timestamp: date, coordinate: coordinate, horizontalAccuracy: 8,
+                                        speedMetersPerSecond: 9, courseDegrees: 0, simulated: true)
+        var preciseEngine = CommuteEngine(timetable: data)
+        let preciseState = preciseEngine.ingest(precise)
+        XCTAssertEqual(preciseState.candidates.count, 2)
+        XCTAssertGreaterThan(preciseState.candidates[0].score - preciseState.candidates[1].score, 0.13)
+        XCTAssertEqual(preciseState.chosenServiceID, "test-run")
+        XCTAssertNotNil(preciseState.segmentEnd)
+
+        var coarse = precise; coarse.horizontalAccuracy = 180
+        var coarseEngine = CommuteEngine(timetable: data)
+        let coarseState = coarseEngine.ingest(coarse)
+        XCTAssertEqual(coarseState.candidates.count, 2)
+        XCTAssertNil(coarseState.chosenServiceID)
+        XCTAssertEqual(coarseState.confidence, .low)
+        XCTAssertTrue(coarseState.notice.contains("列車候補が複数"))
+        XCTAssertNil(coarseState.segmentStart)
+        XCTAssertNil(coarseState.segmentEnd) // Their timetable intervals differ by 60 seconds, exceeding consensus tolerance.
+
+        let singleServiceData = dataset()
+        var singleServiceEngine = CommuteEngine(timetable: singleServiceData)
+        var singleServiceState = ProgressSnapshot.empty(at: date)
+        for (stationID, minute) in [("ebisu", "02"), ("meguro", "04"), ("gotanda", "06")] {
+            var coarseStation = observation(singleServiceData, stationID: stationID,
+                                             at: instant("2026-10-14T08:\(minute):00+09:00"))
+            coarseStation.horizontalAccuracy = 180
+            singleServiceState = singleServiceEngine.ingest(coarseStation)
+        }
+        XCTAssertEqual(singleServiceState.candidates.count, 1)
+        XCTAssertEqual(singleServiceState.routeID, "yamanote")
+        XCTAssertEqual(singleServiceState.phase, .riding)
+        XCTAssertEqual(singleServiceState.confidence, .low) // Even three coarse station fixes cannot justify higher confidence.
+    }
+
     func testReverseDirectionReversesStationsAndNextStop() {
         let data = dataset(reverse: true)
         var engine = CommuteEngine(timetable: data)

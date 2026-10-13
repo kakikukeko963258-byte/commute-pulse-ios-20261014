@@ -26,7 +26,7 @@ enum DebugPlayback {
                 && (scenario == .reverse ? $0.direction == .reverse && $0.stops.first?.stationID == "tamachi" : $0.direction == .forward)
                 && ([.missedOrigin, .intermediateRecovery, .gpsMissing, .ambiguous].contains(scenario)
                     ? $0.stops.first?.stationID == "shibuya" : true)
-                && (scenario == .midnight ? ($0.stops.last?.departureMinute ?? 0) >= 1440 : true)
+                && (scenario == .midnight ? ($0.stops.first?.departureMinute ?? 0) >= 1440 : true)
         }
         guard let service = eligible.sorted(by: {
             let a = abs(($0.stops.first?.departureMinute ?? 0) - 510)

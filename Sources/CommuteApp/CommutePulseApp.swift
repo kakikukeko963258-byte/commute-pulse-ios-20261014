@@ -77,7 +77,7 @@ private struct CommuteScreen: View {
                                     .disabled(controller.debugRemaining == 0)
                             }.buttonStyle(.bordered)
                             if controller.display.isSimulated {
-                                Text("模擬観測: " + controller.snapshot.date.formatted(date: .numeric, time: .standard))
+                                Text("模擬観測（日本時間）: " + controller.debugClockLabel)
                                     .font(.caption.monospacedDigit())
                             }
                         }.padding(.top, 8)

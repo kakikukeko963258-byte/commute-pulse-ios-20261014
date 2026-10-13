@@ -27,7 +27,7 @@ SCENARIOS = (
     "gpsMissing",
     "ambiguous",
 )
-REQUIRED_SCENARIOS = {"idle", "reverse", "express"}
+REQUIRED_SCENARIOS = set(SCENARIOS)
 SCENARIO_STEPS = {"idle": 0, "missedOrigin": 2, "intermediateRecovery": 3,
                   "reverse": 1, "midnight": 1, "express": 1, "gpsMissing": 2, "ambiguous": 1}
 DEVICE_PRIORITY = ("iPhone 17e", "iPhone 16e", "iPhone 17")
@@ -165,6 +165,35 @@ def _write_json(path: Path, value: Any) -> None:
 
 def _select_device_type(payload: Any) -> dict[str, Any] | None:
     return _available_iphone_type(payload)
+
+
+def scenario_matches(key: str, state: dict[str, Any]) -> bool:
+    snapshot = state.get("snapshot", {})
+    if key == "idle":
+        return snapshot.get("phase") == "idle" and not snapshot.get("routeID")
+    if not snapshot.get("isSimulated") or snapshot.get("phase") != "riding":
+        return False
+    if key == "express":
+        return (snapshot.get("routeID") == "denentoshi" and snapshot.get("trainType") == "express"
+                and snapshot.get("nextStationID") == "shibuya")
+    if snapshot.get("routeID") != "yamanote":
+        return False
+    if key == "reverse":
+        return (snapshot.get("direction") == "reverse" and snapshot.get("stations", [{}])[0].get("id") == "tamachi"
+                and snapshot.get("nextStationID") == "takanawa_gateway")
+    if key in {"missedOrigin", "intermediateRecovery"}:
+        return snapshot.get("currentStationID") == "ebisu" and snapshot.get("nextStationID") == "meguro"
+    if key == "gpsMissing":
+        return snapshot.get("confidence") == "low" and snapshot.get("overallProgress", 0) > 0
+    if key == "ambiguous":
+        return (not snapshot.get("chosenServiceID") and len(snapshot.get("candidates", [])) > 1
+                and snapshot.get("confidence") == "low")
+    if key == "midnight":
+        instant = dt.datetime.fromisoformat(snapshot["date"].replace("Z", "+00:00"))
+        tokyo = instant.astimezone(dt.timezone(dt.timedelta(hours=9)))
+        previous = (tokyo.date() - dt.timedelta(days=1)).isoformat()
+        return tokyo.hour < 3 and any(c.get("serviceDate") == previous for c in snapshot.get("candidates", []))
+    return False
 
 
 def main() -> int:
@@ -333,6 +362,12 @@ def main() -> int:
                 metadata["errors"].append(f"{scenario}: no matching app state")
                 metadata["scenarios"].append(record)
                 continue
+            record["stateVerified"] = scenario_matches(scenario, state)
+            if not record["stateVerified"]:
+                record["error"] = "App state does not meet this scenario's behavior"
+                metadata["errors"].append(f"{scenario}: unexpected inference state")
+                metadata["scenarios"].append(record)
+                continue
             image_path = out_dir / f"{scenario}.png"
             screenshot = runner.run(
                 f"screenshot {scenario}",
@@ -376,7 +411,7 @@ def _finish(metadata: dict[str, Any], out_dir: Path, success: bool) -> int:
     _write_json(metadata_path, metadata)
     print(f"Metadata: {metadata_path}")
     if success:
-        print("Required screenshots captured: idle, reverse, express")
+        print("All eight screenshot scenarios captured and inference states verified")
         return 0
     print("Required screenshots are incomplete; see metadata and operation errors", file=sys.stderr)
     return 1

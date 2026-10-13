@@ -195,7 +195,8 @@ public struct CommuteEngine: Sendable {
             confidence = unique != nil && observedCount >= 3 && age < 60
                 && (lastGoodObservation?.horizontalAccuracy ?? .infinity) <= 50 ? .high : .medium
         }
-        if age > configuration.staleObservationSeconds || unique == nil || lastObservation?.coordinate == nil { confidence = .low }
+        if age > configuration.staleObservationSeconds || unique == nil || lastObservation?.coordinate == nil
+            || candidateObservationAccuracy() >= min(configuration.stationRadius, configuration.maximumHorizontalAccuracy) { confidence = .low }
         let skipped = Set(unique?.stops.filter { $0.stopKind == .pass }.map(\.stationID) ?? [])
         let displayStations = orderedIDs.compactMap { id -> StationDisplay? in
             guard let station = timetable.station(id) else { return nil }
@@ -367,7 +368,23 @@ public struct CommuteEngine: Sendable {
     private func uniqueCandidate(_ candidates: [ServiceMatch]) -> ServiceMatch? {
         guard let first = candidates.first else { return nil }
         if candidates.count == 1 { return first }
-        return first.score - candidates[1].score >= configuration.ambiguityMargin ? first : nil
+        let accuracy = candidateObservationAccuracy()
+        // Scores rank timetable agreement, not calibrated probabilities. Coarse GPS cannot resolve train identity
+        // when its uncertainty spans a station's proximity region, even if one timetable scores higher.
+        guard accuracy < min(configuration.stationRadius, configuration.maximumHorizontalAccuracy) else { return nil }
+        let accuracyPenalty = min(0.30, max(0, (accuracy - 50) / 600))
+        let observationDate = lastGoodObservation?.timestamp ?? lastSnapshot.date
+        let recentStations = Set(stationHistory.filter {
+            $0.routeID == routeMatch?.routeID && observationDate.timeIntervalSince($0.date) < 1800
+        }.map(\.stationID))
+        let sparseHistoryPenalty = accuracy > 50 && recentStations.count < 2 ? 0.04 : 0
+        let requiredMargin = configuration.ambiguityMargin + accuracyPenalty + sparseHistoryPenalty
+        return first.score - candidates[1].score >= requiredMargin ? first : nil
+    }
+    private func candidateObservationAccuracy() -> Double {
+        let value = lastObservation?.horizontalAccuracy ?? lastGoodObservation?.horizontalAccuracy
+            ?? configuration.maximumHorizontalAccuracy
+        return value.isFinite && value >= 0 ? value : configuration.maximumHorizontalAccuracy
     }
     private func consensusProjection(_ projections: [(ServiceMatch, Projection)]) -> Projection? {
         guard let first = projections.first, projections.allSatisfy({
